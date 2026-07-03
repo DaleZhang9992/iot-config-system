@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Copy, Plus, Trash2, ArrowLeft, Send, Check } from "lucide-react";
+import { Copy, Plus, Trash2, ArrowLeft, Send, Check, FileDown, Loader2 } from "lucide-react";
 
 interface ParamDef {
   id?: string;
@@ -41,19 +41,20 @@ const DATA_TYPES = ["STRING", "NUMBER", "ENUM", "BOOLEAN", "IP_ADDRESS", "HEX_ST
 
 export default function ConfigureAtCommandsPage() {
   const t = useTranslations("atCommand");
+  const faeT = useTranslations("fae");
   const common = useTranslations("common");
   const params = useParams();
   const router = useRouter();
 
   const [order, setOrder] = useState<any>(null);
-  const [firmwareVersion, setFirmwareVersion] = useState("");
-  const [isCustomVersion, setIsCustomVersion] = useState(false);
-  const [customVersion, setCustomVersion] = useState("");
   const [templateNotes, setTemplateNotes] = useState("");
   const [parameters, setParameters] = useState<ParamDef[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [presets, setPresets] = useState<any[]>([]);
+  const [loadingPreset, setLoadingPreset] = useState(false);
+  const [presetLoaded, setPresetLoaded] = useState(false);
 
   useEffect(() => {
     fetch(`/api/orders/${params.id}`)
@@ -65,9 +66,6 @@ export default function ConfigureAtCommandsPage() {
         if (tplRes.ok) {
           const tpl = await tplRes.json();
           if (tpl) {
-            setFirmwareVersion(tpl.firmwareVersion || "");
-            setIsCustomVersion(tpl.isCustomVersion || false);
-            setCustomVersion(tpl.isCustomVersion ? tpl.firmwareVersion : "");
             setTemplateNotes(tpl.notes || "");
             if (tpl.parameters) {
               setParameters(tpl.parameters.map((p: any) => ({
@@ -82,6 +80,44 @@ export default function ConfigureAtCommandsPage() {
         setLoading(false);
       });
   }, [params.id]);
+
+  const handleLoadPreset = async () => {
+    if (!order?.model) return;
+    setLoadingPreset(true);
+    setPresetLoaded(false);
+    try {
+      const res = await fetch(`/api/presets?model=${encodeURIComponent(order.model)}`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        // Use the first (default) preset
+        const preset = data[0];
+        if (preset.parameters && preset.parameters.length > 0) {
+          setParameters(preset.parameters.map((p: any, i: number) => ({
+            paramKey: p.paramKey || "",
+            displayName: p.displayName || "",
+            description: p.description || "",
+            dataType: p.dataType || "STRING",
+            isRequired: p.isRequired || false,
+            defaultValue: p.defaultValue || "",
+            unit: p.unit || "",
+            minValue: p.minValue?.toString() || "",
+            maxValue: p.maxValue?.toString() || "",
+            step: p.step?.toString() || "",
+            enumValues: p.enumValues || "",
+            regexPattern: p.regexPattern || "",
+            regexHint: p.regexHint || "",
+            sortOrder: p.sortOrder ?? i,
+            groupName: p.groupName || "",
+          })));
+          setPresetLoaded(true);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load preset:", err);
+    } finally {
+      setLoadingPreset(false);
+    }
+  };
 
   const addParam = () => {
     setParameters([...parameters, { ...DEFAULT_PARAM, sortOrder: parameters.length }]);
@@ -106,8 +142,6 @@ export default function ConfigureAtCommandsPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firmwareVersion: isCustomVersion ? customVersion : firmwareVersion,
-          isCustomVersion,
           notes: templateNotes,
           parameters: parameters.map((p, i) => ({
             ...p,
@@ -152,47 +186,36 @@ export default function ConfigureAtCommandsPage() {
         </div>
       </div>
 
-      {/* Firmware Version */}
-      <Card>
-        <CardHeader><CardTitle>{t("firmwareVersion")}</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <input type="radio" id="latest" checked={!isCustomVersion} onChange={() => setIsCustomVersion(false)} />
-              <Label htmlFor="latest">{t("latestVersion")}</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input type="radio" id="custom" checked={isCustomVersion} onChange={() => setIsCustomVersion(true)} />
-              <Label htmlFor="custom">{t("customVersion")}</Label>
-            </div>
-          </div>
-          {isCustomVersion ? (
-            <Input value={customVersion} onChange={e => setCustomVersion(e.target.value)} placeholder="输入固件版本号" />
-          ) : (
-            <Select value={firmwareVersion} onValueChange={setFirmwareVersion}>
-              <SelectTrigger><SelectValue placeholder={t("latestVersion")} /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="v1.0.0">v1.0.0</SelectItem>
-                <SelectItem value="v1.1.0">v1.1.0</SelectItem>
-                <SelectItem value="v2.0.0">v2.0.0</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        </CardContent>
-      </Card>
-
       {/* AT Parameters */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{t("title")} ({parameters.length})</CardTitle>
-          <Button onClick={addParam} size="sm">
-            <Plus className="h-4 w-4 mr-1" />{t("addParam")}
-          </Button>
+          <div className="flex items-center gap-2">
+            <CardTitle>{t("title")} ({parameters.length})</CardTitle>
+            {order?.model && (
+              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                {order.model}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button onClick={handleLoadPreset} variant="outline" size="sm" disabled={loadingPreset || !order?.model}>
+              {loadingPreset ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4 mr-1" />}
+              {loadingPreset ? "加载中..." : "加载型号预设"}
+            </Button>
+            <Button onClick={addParam} size="sm">
+              <Plus className="h-4 w-4 mr-1" />{t("addParam")}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {presetLoaded && (
+            <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 text-sm px-3 py-2 rounded-md">
+              已加载型号预设
+            </div>
+          )}
           {parameters.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
-              暂无参数，点击"添加参数"开始配置
+              {faeT("noParams")}
             </div>
           )}
 
@@ -302,7 +325,7 @@ export default function ConfigureAtCommandsPage() {
       <Card>
         <CardHeader><CardTitle>FAE {common("notes")}</CardTitle></CardHeader>
         <CardContent>
-          <Input value={templateNotes} onChange={e => setTemplateNotes(e.target.value)} placeholder="备注信息（可选）" />
+          <Input value={templateNotes} onChange={e => setTemplateNotes(e.target.value)} placeholder={faeT("notes")} />
         </CardContent>
       </Card>
 

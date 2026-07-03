@@ -112,7 +112,7 @@ export default function AdminEmailConfigPage() {
                   <TableCell><Badge variant="outline">{t(ROLE_LABELS[r.role] || r.role)}</Badge></TableCell>
                   <TableCell>{r.email}</TableCell>
                   <TableCell>{r.name || "-"}</TableCell>
-                  <TableCell>{r.isActive ? <Badge variant="success">启用</Badge> : <Badge variant="secondary">停用</Badge>}</TableCell>
+                  <TableCell>{r.isActive ? <Badge variant="success">{t("enabled")}</Badge> : <Badge variant="secondary">{t("disabled")}</Badge>}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="sm" onClick={() => handleDelete(r.id)}>
                       <Trash2 className="h-4 w-4 text-destructive" />

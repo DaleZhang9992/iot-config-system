@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 
 export default function AdminAuditLogPage() {
+  const t = useTranslations("admin");
   const common = useTranslations("common");
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +30,7 @@ export default function AdminAuditLogPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">审计日志</h1>
+        <h1 className="text-2xl font-bold">{t("auditLogTitle")}</h1>
       </div>
 
       <Card>
@@ -38,7 +39,7 @@ export default function AdminAuditLogPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="按操作类型筛选 (如: APPROVED, REJECTED)"
+                placeholder={t("filterByAction")}
                 className="pl-10"
                 value={searchAction}
                 onChange={e => setSearchAction(e.target.value)}
@@ -52,11 +53,11 @@ export default function AdminAuditLogPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>时间</TableHead>
-                <TableHead>操作</TableHead>
-                <TableHead>描述</TableHead>
-                <TableHead>操作人</TableHead>
-                <TableHead>关联订单</TableHead>
+                <TableHead>{t("time")}</TableHead>
+                <TableHead>{t("action")}</TableHead>
+                <TableHead>{t("description")}</TableHead>
+                <TableHead>{t("operator")}</TableHead>
+                <TableHead>{t("relatedOrder")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

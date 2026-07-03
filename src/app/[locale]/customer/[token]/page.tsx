@@ -27,6 +27,9 @@ export default function CustomerFormPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitterName, setSubmitterName] = useState("");
   const [submitterEmail, setSubmitterEmail] = useState("");
+  const [firmwareVersion, setFirmwareVersion] = useState("");
+  const [shipWithSimCard, setShipWithSimCard] = useState<boolean | null>(null);
+  const [shipPoweredOn, setShipPoweredOn] = useState<boolean | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
@@ -47,6 +50,15 @@ export default function CustomerFormPage() {
       .then((data) => {
         setOrder(data.order);
         setTemplate(data.template);
+
+        // Pre-fill shipping and firmware fields from previous submission
+        setFirmwareVersion(data.order.firmwareVersion || "");
+        if (data.order.shipWithSimCard !== null && data.order.shipWithSimCard !== undefined) {
+          setShipWithSimCard(data.order.shipWithSimCard);
+        }
+        if (data.order.shipPoweredOn !== null && data.order.shipPoweredOn !== undefined) {
+          setShipPoweredOn(data.order.shipPoweredOn);
+        }
 
         // If there's a pending submission (rejected & resubmit), pre-fill
         if (data.lastSubmission) {
@@ -104,6 +116,21 @@ export default function CustomerFormPage() {
       return;
     }
 
+    if (!firmwareVersion.trim()) {
+      setErrors({ firmwareVersion: "请填写固件版本" });
+      return;
+    }
+
+    if (shipWithSimCard === null) {
+      setErrors({ shipWithSimCard: "请选择是否插入 SIM 卡出货" });
+      return;
+    }
+
+    if (shipPoweredOn === null) {
+      setErrors({ shipPoweredOn: "请选择是否开机出货" });
+      return;
+    }
+
     // Client-side validation
     if (template?.parameters) {
       const validationErrors = validateAllParams(template.parameters, values);
@@ -124,6 +151,9 @@ export default function CustomerFormPage() {
         body: JSON.stringify({
           submitterName,
           submitterEmail,
+          firmwareVersion,
+          shipWithSimCard,
+          shipPoweredOn,
           paramValues: values,
         }),
       });
@@ -158,7 +188,7 @@ export default function CustomerFormPage() {
       <Card className="max-w-md">
         <CardHeader>
           <CardTitle className="text-destructive flex items-center gap-2">
-            <AlertCircle className="h-5 w-5" /> 链接无效
+            <AlertCircle className="h-5 w-5" /> {t("invalidLink")}
           </CardTitle>
           <CardDescription>{error}</CardDescription>
         </CardHeader>
@@ -171,9 +201,9 @@ export default function CustomerFormPage() {
       <Card className="max-w-md">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5" /> 配置尚未就绪
+            <AlertCircle className="h-5 w-5" /> {t("configNotReady")}
           </CardTitle>
-          <CardDescription>请等待 FAE 完成配置后再访问此链接</CardDescription>
+          <CardDescription>{t("configNotReadyDesc")}</CardDescription>
         </CardHeader>
       </Card>
     </div>
@@ -251,8 +281,7 @@ export default function CustomerFormPage() {
             <CardHeader>
               <CardTitle className="text-lg">{t("configForm")}</CardTitle>
               <CardDescription>
-                固件版本: {template.firmwareVersion}
-                {template.isCustomVersion && " (自定义)"}
+                请填写您的设备配置信息，带 <span className="text-destructive">*</span> 的为必填项
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -265,6 +294,88 @@ export default function CustomerFormPage() {
                 <div className="space-y-2">
                   <Label>{t("submitterEmail")}</Label>
                   <Input type="email" value={submitterEmail} onChange={e => setSubmitterEmail(e.target.value)} />
+                </div>
+              </div>
+
+              {/* Firmware Version */}
+              <div className="space-y-3 pb-4 border-b">
+                <h3 className="font-medium text-sm text-muted-foreground">固件信息</h3>
+                <div className="space-y-2">
+                  <Label>目标固件版本 <span className="text-destructive">*</span></Label>
+                  <Input
+                    value={firmwareVersion}
+                    onChange={e => {
+                      setFirmwareVersion(e.target.value);
+                      if (errors.firmwareVersion) {
+                        const newErrors = { ...errors };
+                        delete newErrors.firmwareVersion;
+                        setErrors(newErrors);
+                      }
+                    }}
+                    placeholder="如: v2.0.0"
+                  />
+                  {errors.firmwareVersion && (
+                    <p className="text-xs text-destructive">{errors.firmwareVersion}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Shipping Configuration */}
+              <div className="space-y-3 pb-4 border-b">
+                <h3 className="font-medium text-sm text-muted-foreground">生产发运设置</h3>
+                <div className="space-y-3">
+                  <div>
+                    <Label>出货是否插入 SIM 卡 <span className="text-destructive">*</span></Label>
+                    <div className="flex items-center gap-4 mt-1">
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input
+                          type="radio"
+                          name="shipSim"
+                          checked={shipWithSimCard === true}
+                          onChange={() => { setShipWithSimCard(true); if (errors.shipWithSimCard) { const ne = {...errors}; delete ne.shipWithSimCard; setErrors(ne); } }}
+                        />
+                        <span>是</span>
+                      </label>
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input
+                          type="radio"
+                          name="shipSim"
+                          checked={shipWithSimCard === false}
+                          onChange={() => { setShipWithSimCard(false); if (errors.shipWithSimCard) { const ne = {...errors}; delete ne.shipWithSimCard; setErrors(ne); } }}
+                        />
+                        <span>否</span>
+                      </label>
+                    </div>
+                    {errors.shipWithSimCard && (
+                      <p className="text-xs text-destructive mt-1">{errors.shipWithSimCard}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>出货前是否需要开机确认 <span className="text-destructive">*</span></Label>
+                    <div className="flex items-center gap-4 mt-1">
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input
+                          type="radio"
+                          name="shipPower"
+                          checked={shipPoweredOn === true}
+                          onChange={() => { setShipPoweredOn(true); if (errors.shipPoweredOn) { const ne = {...errors}; delete ne.shipPoweredOn; setErrors(ne); } }}
+                        />
+                        <span>是</span>
+                      </label>
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input
+                          type="radio"
+                          name="shipPower"
+                          checked={shipPoweredOn === false}
+                          onChange={() => { setShipPoweredOn(false); if (errors.shipPoweredOn) { const ne = {...errors}; delete ne.shipPoweredOn; setErrors(ne); } }}
+                        />
+                        <span>否</span>
+                      </label>
+                    </div>
+                    {errors.shipPoweredOn && (
+                      <p className="text-xs text-destructive mt-1">{errors.shipPoweredOn}</p>
+                    )}
+                  </div>
                 </div>
               </div>
 

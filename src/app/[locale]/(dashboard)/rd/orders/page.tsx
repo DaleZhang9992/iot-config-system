@@ -52,7 +52,7 @@ export default function RdOrdersPage() {
                   <TableCell>{order.model}</TableCell>
                   <TableCell>{order.quantity}</TableCell>
                   <TableCell>{order.customerName || "-"}</TableCell>
-                  <TableCell><Badge variant="success">已通过</Badge></TableCell>
+                  <TableCell><Badge variant="success">{orderT("status_approved")}</Badge></TableCell>
                   <TableCell>
                     <Button size="sm" onClick={() => router.push(`/rd/orders/${order.id}`)}>
                       {t("viewConfig")}

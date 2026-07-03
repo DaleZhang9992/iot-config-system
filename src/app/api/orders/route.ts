@@ -13,20 +13,34 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "20");
 
   const where: any = {};
+  const andConditions: any[] = [];
 
   // Role-based filtering
   if (token.role === "SALES") {
     where.salesUserId = token.id;
+  } else if (token.role === "FAE") {
+    andConditions.push({
+      OR: [
+        { faeUserId: token.id },
+        { faeUserId: null },
+      ],
+    });
   }
 
   if (status) where.status = status;
 
   if (search) {
-    where.OR = [
-      { orderNo: { contains: search, mode: "insensitive" } },
-      { model: { contains: search, mode: "insensitive" } },
-      { customerName: { contains: search, mode: "insensitive" } },
-    ];
+    andConditions.push({
+      OR: [
+        { orderNo: { contains: search, mode: "insensitive" } },
+        { model: { contains: search, mode: "insensitive" } },
+        { customerName: { contains: search, mode: "insensitive" } },
+      ],
+    });
+  }
+
+  if (andConditions.length > 0) {
+    where.AND = andConditions;
   }
 
   const [orders, total] = await Promise.all([
@@ -34,6 +48,7 @@ export async function GET(req: NextRequest) {
       where,
       include: {
         salesUser: { select: { id: true, name: true, email: true } },
+        faeUser: { select: { id: true, name: true, email: true } },
         template: { select: { id: true } },
       },
       orderBy: { createdAt: "desc" },

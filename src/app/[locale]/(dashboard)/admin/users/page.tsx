@@ -69,10 +69,10 @@ export default function AdminUsersPage() {
                 <Select value={form.role} onValueChange={v => setForm({...form, role: v})}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="SALES">销售</SelectItem>
-                    <SelectItem value="FAE">FAE</SelectItem>
-                    <SelectItem value="RD">研发</SelectItem>
-                    <SelectItem value="ADMIN">管理员</SelectItem>
+                    <SelectItem value="SALES">{t("roleSales")}</SelectItem>
+                    <SelectItem value="FAE">{t("roleFae")}</SelectItem>
+                    <SelectItem value="RD">{t("roleRd")}</SelectItem>
+                    <SelectItem value="ADMIN">{t("roleAdmin")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -98,7 +98,7 @@ export default function AdminUsersPage() {
                 <TableHead>{t("userEmail")}</TableHead>
                 <TableHead>{t("userRole")}</TableHead>
                 <TableHead>{t("userActive")}</TableHead>
-                <TableHead>创建时间</TableHead>
+                <TableHead>{t("createdAt")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -109,7 +109,7 @@ export default function AdminUsersPage() {
                   <TableCell>{u.name}</TableCell>
                   <TableCell>{u.email}</TableCell>
                   <TableCell><Badge variant="secondary">{u.role}</Badge></TableCell>
-                  <TableCell>{u.isActive ? <Badge variant="success">启用</Badge> : <Badge variant="destructive">停用</Badge>}</TableCell>
+                  <TableCell>{u.isActive ? <Badge variant="success">{t("enabled")}</Badge> : <Badge variant="destructive">{t("disabled")}</Badge>}</TableCell>
                   <TableCell>{new Date(u.createdAt).toLocaleDateString()}</TableCell>
                 </TableRow>
               ))}

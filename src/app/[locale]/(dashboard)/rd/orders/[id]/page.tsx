@@ -42,7 +42,7 @@ export default function RdOrderDetailPage() {
       <div className="flex items-center gap-2">
         <CheckCircle2 className="h-6 w-6 text-green-600" />
         <h1 className="text-2xl font-bold">{t("configDetail")}</h1>
-        <Badge variant="success" className="ml-2">已审批通过</Badge>
+        <Badge variant="success" className="ml-2">{orderT("status_approved")}</Badge>
       </div>
 
       <Card>

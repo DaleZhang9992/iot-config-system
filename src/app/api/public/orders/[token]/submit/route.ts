@@ -65,10 +65,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     }
   }
 
-  // Update order status
+  // Update order status and customer-filled fields
   await prisma.order.update({
     where: { id: order.id },
-    data: { status: "CUSTOMER_SUBMITTED" },
+    data: {
+      status: "CUSTOMER_SUBMITTED",
+      firmwareVersion: body.firmwareVersion ?? undefined,
+      shipWithSimCard: body.shipWithSimCard ?? undefined,
+      shipPoweredOn: body.shipPoweredOn ?? undefined,
+    },
   });
 
   // Audit log

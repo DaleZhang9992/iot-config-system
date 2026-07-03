@@ -28,7 +28,7 @@ export default function CreateOrderPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.orderNo || !form.model || !form.quantity) {
-      setError("请填写必填项");
+      setError("请填写必填字段");
       return;
     }
     setSaving(true);

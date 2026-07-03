@@ -22,6 +22,7 @@ const STATUS_MAP: Record<string, string> = {
 
 export default function FaeOrderDetailPage() {
   const t = useTranslations("order");
+  const faeT = useTranslations("fae");
   const common = useTranslations("common");
   const params = useParams();
   const router = useRouter();
@@ -90,11 +91,11 @@ export default function FaeOrderDetailPage() {
 
       {/* Link Management */}
       <Card>
-        <CardHeader><CardTitle>客户链接管理</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{faeT("linkManagement")}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           {!linkGenerated ? (
             <Button onClick={handleGenerateLink}>
-              生成客户链接
+              {faeT("generateLink")}
             </Button>
           ) : (
             <>
@@ -109,16 +110,16 @@ export default function FaeOrderDetailPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">客户邮箱</label>
+                  <label className="text-sm font-medium">{faeT("customerEmail")}</label>
                   <Input type="email" value={sendEmail} onChange={e => setSendEmail(e.target.value)} placeholder="customer@example.com" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">客户名称</label>
-                  <Input value={sendName} onChange={e => setSendName(e.target.value)} placeholder="客户名称" />
+                  <label className="text-sm font-medium">{faeT("customerName")}</label>
+                  <Input value={sendName} onChange={e => setSendName(e.target.value)} placeholder={faeT("customerName")} />
                 </div>
               </div>
               <Button onClick={handleSendLink} disabled={sending || !sendEmail || sent}>
-                {sent ? <><Check className="h-4 w-4 mr-1" />已发送</> : <><Send className="h-4 w-4 mr-1" />{sending ? common("loading") : "发送邮件给客户"}</>}
+                {sent ? <><Check className="h-4 w-4 mr-1" />{faeT("sent")}</> : <><Send className="h-4 w-4 mr-1" />{sending ? common("loading") : faeT("sendEmailToCustomer")}</>}
               </Button>
             </>
           )}
@@ -131,18 +132,18 @@ export default function FaeOrderDetailPage() {
           <CardHeader><CardTitle>AT 指令配置</CardTitle></CardHeader>
           <CardContent>
             <div className="mb-4 text-sm">
-              <span className="text-muted-foreground">固件版本: </span>
+              <span className="text-muted-foreground">{faeT("firmwareVersion")}: </span>
               <span className="font-medium">{order.template.firmwareVersion}</span>
             </div>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>参数标识</TableHead>
-                  <TableHead>显示名称</TableHead>
-                  <TableHead>数据类型</TableHead>
-                  <TableHead>默认值</TableHead>
-                  <TableHead>范围</TableHead>
-                  <TableHead>必填</TableHead>
+                  <TableHead>{faeT("paramKey")}</TableHead>
+                  <TableHead>{faeT("displayName")}</TableHead>
+                  <TableHead>{faeT("dataType")}</TableHead>
+                  <TableHead>{faeT("defaultValue")}</TableHead>
+                  <TableHead>{faeT("range")}</TableHead>
+                  <TableHead>{faeT("isRequired")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -155,11 +156,11 @@ export default function FaeOrderDetailPage() {
                     <TableCell className="text-xs">
                       {p.minValue !== null && `[${p.minValue}`}
                       {p.maxValue !== null && ` ~ ${p.maxValue}]`}
-                      {p.enumValues && `可选: ${p.enumValues}`}
-                      {p.regexPattern && `正则: ${p.regexPattern}`}
+                      {p.enumValues && `${faeT("enumOptions")}: ${p.enumValues}`}
+                      {p.regexPattern && `${faeT("regex")}: ${p.regexPattern}`}
                       {!p.minValue && !p.maxValue && !p.enumValues && !p.regexPattern && "-"}
                     </TableCell>
-                    <TableCell>{p.isRequired ? "是" : "否"}</TableCell>
+                    <TableCell>{p.isRequired ? faeT("yes") : faeT("no")}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -168,6 +169,27 @@ export default function FaeOrderDetailPage() {
         </Card>
       )}
 
+      {/* Shipping Info */}
+      <Card>
+        <CardHeader><CardTitle>{faeT("shippingConfig")}</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-6 text-sm">
+            <div>
+              <span className="text-muted-foreground">{faeT("targetFirmware")}: </span>
+              <span className="font-medium">{order.firmwareVersion || faeT("notSpecified")}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">{faeT("shipWithSimCard")}: </span>
+              <span className="font-medium">{order.shipWithSimCard ? faeT("yes") : faeT("no")}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">{faeT("shipPoweredOn")}: </span>
+              <span className="font-medium">{order.shipPoweredOn ? faeT("yes") : faeT("no")}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Audit Logs */}
       {order.auditLogs?.length > 0 && (
         <Card>
@@ -175,7 +197,7 @@ export default function FaeOrderDetailPage() {
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow><TableHead>时间</TableHead><TableHead>操作</TableHead><TableHead>描述</TableHead><TableHead>操作人</TableHead></TableRow>
+                <TableRow><TableHead>{faeT("time")}</TableHead><TableHead>{faeT("actionLabel")}</TableHead><TableHead>{faeT("descriptionLabel")}</TableHead><TableHead>{faeT("operatorLabel")}</TableHead></TableRow>
               </TableHeader>
               <TableBody>
                 {order.auditLogs.map((log: any) => (

@@ -112,12 +112,12 @@ export default function ReviewPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>参数</TableHead>
-                  <TableHead>显示名称</TableHead>
-                  <TableHead>数据类型</TableHead>
-                  <TableHead>必填</TableHead>
-                  <TableHead>客户填写值</TableHead>
-                  <TableHead>默认值</TableHead>
+                  <TableHead>{t("parameter")}</TableHead>
+                  <TableHead>{t("displayName")}</TableHead>
+                  <TableHead>{t("dataType")}</TableHead>
+                  <TableHead>{t("isRequired")}</TableHead>
+                  <TableHead>{t("customerValue")}</TableHead>
+                  <TableHead>{t("defaultValue")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -130,10 +130,10 @@ export default function ReviewPage() {
                       <TableCell className="font-mono text-xs">{param.paramKey}</TableCell>
                       <TableCell>{param.displayName}</TableCell>
                       <TableCell>{param.dataType}</TableCell>
-                      <TableCell>{param.isRequired ? "是" : "否"}</TableCell>
+                      <TableCell>{param.isRequired ? common("yes") : common("no")}</TableCell>
                       <TableCell className={customerValue ? "font-medium" : "text-muted-foreground"}>
-                        {customerValue || "(空)"}
-                        {isChanged && <Badge variant="warning" className="ml-2">已修改</Badge>}
+                        {customerValue || `(${common("empty")})`}
+                        {isChanged && <Badge variant="warning" className="ml-2">{t("modified")}</Badge>}
                       </TableCell>
                       <TableCell className="text-muted-foreground">{defaultValue || "-"}</TableCell>
                     </TableRow>

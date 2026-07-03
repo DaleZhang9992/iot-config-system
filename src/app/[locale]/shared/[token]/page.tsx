@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,6 +10,7 @@ import { CheckCircle2 } from "lucide-react";
 import LanguageSwitcher from "@/components/layout/language-switcher";
 
 export default function SharedViewPage() {
+  const t = useTranslations("shared");
   const params = useParams();
   const [order, setOrder] = useState<any>(null);
   const [submission, setSubmission] = useState<any>(null);
@@ -47,7 +49,7 @@ export default function SharedViewPage() {
         <div className="max-w-4xl mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-6 w-6" />
-            <h1 className="text-xl font-bold">配置已审批通过</h1>
+            <h1 className="text-xl font-bold">{t("title")}</h1>
           </div>
           <LanguageSwitcher />
         </div>
@@ -55,30 +57,30 @@ export default function SharedViewPage() {
 
       <div className="max-w-4xl mx-auto p-4 space-y-6">
         <Card>
-          <CardHeader><CardTitle>订单信息</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t("orderInfo")}</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-2 gap-4 text-sm">
-            <div><span className="text-muted-foreground">订单号:</span> <span className="font-medium">{order.orderNo}</span></div>
-            <div><span className="text-muted-foreground">产品型号:</span> <span className="font-medium">{order.model}</span></div>
-            <div><span className="text-muted-foreground">数量:</span> <span className="font-medium">{order.quantity}</span></div>
-            <div><span className="text-muted-foreground">订单日期:</span> <span className="font-medium">{new Date(order.orderDate).toLocaleDateString()}</span></div>
-            <div><span className="text-muted-foreground">状态:</span> <Badge variant="success">已审批通过</Badge></div>
+            <div><span className="text-muted-foreground">{t("orderNo")}:</span> <span className="font-medium">{order.orderNo}</span></div>
+            <div><span className="text-muted-foreground">{t("productModel")}:</span> <span className="font-medium">{order.model}</span></div>
+            <div><span className="text-muted-foreground">{t("quantity")}:</span> <span className="font-medium">{order.quantity}</span></div>
+            <div><span className="text-muted-foreground">{t("orderDate")}:</span> <span className="font-medium">{new Date(order.orderDate).toLocaleDateString()}</span></div>
+            <div><span className="text-muted-foreground">{t("status")}:</span> <Badge variant="success">{t("statusApproved")}</Badge></div>
           </CardContent>
         </Card>
 
         {submission?.template?.parameters && (
           <Card>
             <CardHeader>
-              <CardTitle>AT 指令配置详情</CardTitle>
-              <p className="text-sm text-muted-foreground">固件版本: {submission.template.firmwareVersion}</p>
+              <CardTitle>{t("configDetail")}</CardTitle>
+              <p className="text-sm text-muted-foreground">{t("version")}: {submission.template.firmwareVersion}</p>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>参数</TableHead>
-                    <TableHead>名称</TableHead>
-                    <TableHead>配置值</TableHead>
-                    <TableHead>默认值</TableHead>
+                    <TableHead>{t("parameter")}</TableHead>
+                    <TableHead>{t("name")}</TableHead>
+                    <TableHead>{t("configValue")}</TableHead>
+                    <TableHead>{t("defaultValue")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
