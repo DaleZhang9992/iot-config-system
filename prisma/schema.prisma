@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========== 用户与认证 ==========
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String
+  role          UserRole  @default(SALES)
+  phone         String?
+  language      String    @default("zh")
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  orders              Order[]
+  configuredTemplates ATCommandTemplate[]
+  auditLogs           AuditLog[]
+  accounts            Account[]
+  sessions            Session[]
+}
+
+enum UserRole {
+  SALES
+  FAE
+  RD
+  ADMIN
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  @@unique([identifier, token])
+}
+
+// ========== 业务核心 ==========
+
+model Order {
+  id            String       @id @default(cuid())
+  orderNo       String       @unique
+  model         String
+  quantity      Int
+  orderDate     DateTime
+  status        OrderStatus  @default(PENDING_CONFIG)
+  customerName  String?
+  customerEmail String?
+  linkToken     String?      @unique
+  linkSentAt    DateTime?
+  notes         String?      @db.Text
+
+  salesUserId String
+  salesUser   User  @relation(fields: [salesUserId], references: [id])
+
+  template    ATCommandTemplate?
+  submissions CustomerSubmission[]
+  auditLogs   AuditLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum OrderStatus {
+  PENDING_CONFIG
+  FAE_CONFIGURED
+  LINK_SENT
+  CUSTOMER_SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+// ========== AT 指令模板 ==========
+
+model ATCommandTemplate {
+  id              String   @id @default(cuid())
+  orderId         String   @unique
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  faeUserId       String
+  faeUser         User     @relation(fields: [faeUserId], references: [id])
+  firmwareVersion String
+  isCustomVersion Boolean  @default(false)
+  notes           String?  @db.Text
+
+  parameters ATCommandParameter[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ATCommandParameter {
+  id           String        @id @default(cuid())
+  templateId   String
+  template     ATCommandTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  paramKey     String
+  displayName  String
+  description  String?
+
+  dataType     ParamDataType @default(STRING)
+  isRequired   Boolean       @default(false)
+  defaultValue String?
+  unit         String?
+
+  minValue     Float?
+  maxValue     Float?
+  step         Float?
+  enumValues   String?  @db.Text
+  regexPattern String?
+  regexHint    String?
+
+  sortOrder    Int    @default(0)
+  groupName    String?
+
+  values    ATCommandValue[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ParamDataType {
+  STRING
+  NUMBER
+  ENUM
+  BOOLEAN
+  IP_ADDRESS
+  HEX_STRING
+}
+
+// ========== 客户提交 ==========
+
+model CustomerSubmission {
+  id             String           @id @default(cuid())
+  orderId        String
+  order          Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  version        Int              @default(1)
+  submitterName  String?
+  submitterEmail String?
+
+  status         SubmissionStatus @default(PENDING)
+  reviewComment  String?          @db.Text
+  reviewDetails  String?          @db.Text
+  reviewedBy     String?
+  reviewedAt     DateTime?
+
+  paramValues ATCommandValue[]
+
+  submittedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([orderId, version])
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ATCommandValue {
+  id           String             @id @default(cuid())
+  submissionId String
+  submission   CustomerSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  parameterId  String
+  parameter    ATCommandParameter @relation(fields: [parameterId], references: [id])
+  value        String             @db.Text
+
+  @@unique([submissionId, parameterId])
+}
+
+// ========== 审计日志 ==========
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  action      String
+  description String   @db.Text
+  metadata    Json?
+  createdAt   DateTime @default(now())
+}
+
+// ========== 系统配置 ==========
+
+model SystemConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}
+
+model EmailRecipient {
+  id        String   @id @default(cuid())
+  role      RoleType
+  email     String
+  name      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([role, email])
+}
+
+enum RoleType {
+  SALES_NOTIFY
+  FAE_NOTIFY
+  RD_NOTIFY
+}
